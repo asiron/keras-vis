@@ -81,7 +81,8 @@ def visualize_saliency_with_losses(input_tensor, losses, seed_input, wrt_tensor=
 
 
 def visualize_saliency(model, layer_idx, filter_indices, seed_input,
-                       wrt_tensor=None, backprop_modifier=None, grad_modifier='absolute'):
+                       wrt_tensor=None, backprop_modifier=None, grad_modifier='absolute',
+                       custom_objects=None):
     """Generates an attention heatmap over the `seed_input` for maximizing `filter_indices`
     output in the given `layer_idx`.
 
@@ -103,6 +104,9 @@ def visualize_saliency(model, layer_idx, filter_indices, seed_input,
         grad_modifier: gradient modifier to use. See [grad_modifiers](vis.grad_modifiers.md). By default `absolute`
             value of gradients are used. To visualize positive or negative gradients, use `relu` and `negate`
             respectively. (Default value = 'absolute')
+        custom_objects: Optional dictionary mapping names
+            (strings) to custom classes or functions to be
+            considered during deserialization.
 
     Example:
         If you wanted to visualize attention over 'bird' category, say output index 22 on the
@@ -117,7 +121,7 @@ def visualize_saliency(model, layer_idx, filter_indices, seed_input,
     """
     if backprop_modifier is not None:
         modifier_fn = get(backprop_modifier)
-        model = modifier_fn(model)
+        model = modifier_fn(model, custom_objects=custom_objects)
 
     # `ActivationMaximization` loss reduces as outputs get large, hence negative gradients indicate the direction
     # for increasing activations. Multiply with -1 so that positive gradients indicate increase instead.

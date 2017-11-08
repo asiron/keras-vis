@@ -74,14 +74,18 @@ class ActivationMaximization(Loss):
 
     def build_loss(self):
         layer_output = self.layer.output
+        print(layer_output)
 
         # For all other layers it is 4
         is_dense = K.ndim(layer_output) == 2
+
+        print(self.filter_indices)
 
         loss = 0.
         for idx in self.filter_indices:
             if is_dense:
                 loss += -K.mean(layer_output[:, idx])
+                print(loss)
             else:
                 # slicer is used to deal with `channels_first` or `channels_last` image data formats
                 # without the ugly conditional statements.

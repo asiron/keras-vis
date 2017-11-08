@@ -49,12 +49,15 @@ _BACKPROP_MODIFIERS = {
 _MODIFIED_MODEL_CACHE = dict()
 
 
-def modify_model_backprop(model, backprop_modifier):
+def modify_model_backprop(model, backprop_modifier, custom_objects=None):
     """Creates a copy of model by modifying all activations to use a custom op to modify the backprop behavior.
 
     Args:
         model:  The `keras.models.Model` instance.
         backprop_modifier: One of `{'guided', 'rectified'}`
+        custom_objects: Optional dictionary mapping names
+            (strings) to custom classes or functions to be
+            considered during deserialization.
 
     Returns:
         A copy of model with modified activations for backwards pass.
@@ -79,10 +82,11 @@ def modify_model_backprop(model, backprop_modifier):
         return modified_model
 
     model_path = os.path.join(tempfile.gettempdir(), next(tempfile._get_candidate_names()) + '.h5')
+    print(model_path)
     try:
         # 1. Clone original model via save and load.
         model.save(model_path)
-        modified_model = load_model(model_path)
+        modified_model = load_model(model_path, custom_objects=custom_objects)
 
         # 2. Replace all possible activations with ReLU.
         for i, layer in utils.reverse_enumerate(modified_model.layers):
@@ -108,7 +112,7 @@ def modify_model_backprop(model, backprop_modifier):
         # 5. Create graph under custom context manager.
         with tf.get_default_graph().gradient_override_map({'Relu': backprop_modifier}):
             #  This should rebuild graph with modifications.
-            modified_model = load_model(model_path)
+            modified_model = load_model(model_path, custom_objects=custom_objects)
 
             # Cache to improve subsequent call performance.
             _MODIFIED_MODEL_CACHE[(model, backprop_modifier)] = modified_model
